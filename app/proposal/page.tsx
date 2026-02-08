@@ -11,33 +11,32 @@ import Link from "next/link";
 // USER CONFIGURATION (Personalize here)
 // ----------------------------------------------------------------------
 const PARTNER_NAME = "Gladys";
-const PROPOSAL_MESSAGE = "Will You Marry Me?";
+const PROPOSAL_MESSAGE = "will you be mine officially?";
 const MEMORIES: HoneycombItem[] = [
-    { id: 1, type: "image", content: "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?q=80&w=400&auto=format&fit=crop" },
-    { id: 2, type: "image", content: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSRhhEZI8w4qAUhDFEz1JRA8apbHr3z47CrXg&s" },
-    { id: 3, type: "image", content: "https://images.unsplash.com/photo-1516589174184-c68526546202?q=80&w=400&auto=format&fit=crop" },
-    { id: 4, type: "image", content: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=400&auto=format&fit=crop" },
-    { id: 5, type: "image", content: "https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400&auto=format&fit=crop" },
-    { id: 6, type: "image", content: "https://images.unsplash.com/photo-1522673607200-1645062cd958?q=80&w=400&auto=format&fit=crop" },
-    { id: 7, type: "image", content: "https://images.unsplash.com/photo-1494774157365-9e04c6720e47?q=80&w=400&auto=format&fit=crop" },
-    { id: 8, type: "image", content: "https://images.unsplash.com/photo-1474552226712-ac0f0961a954?q=80&w=400&auto=format&fit=crop" },
+    { id: 1, type: "image", content: "/light-box/Screenshot_20260207-223756.jpg" },
+    { id: 2, type: "text", content: "Anytime I am with you" },
+    { id: 4, type: "image", content: "/light-box/Screenshot_20260207-223819.jpg" },
+    { id: 5, type: "text", content: "There is this feeling" },
+    { id: 9, type: "image", content: "/light-box/Screenshot_20260207-224633.jpg" },
+    { id: 10, type: "text", content: "That makes me sure that I want to spend the rest of my life with you" },
+    { id: 12, type: "image", content: "/light-box/Screenshot_20260207-225120.jpg" },
+    { id: 13, type: "text", content: "and I am sure that I want you to be mine not just a situationship any longer but to be mine officially" },
 ];
 
 export default function ProposalPage() {
-    const router = useRouter();
     const [allRevealed, setAllRevealed] = useState(false);
     const [showQuestion, setShowQuestion] = useState(false);
-
-    // If all hexes are revealed, show the question after a short delay
-    useEffect(() => {
-        if (allRevealed) {
-            const timer = setTimeout(() => setShowQuestion(true), 600); // 1.5s delay for effect
-            return () => clearTimeout(timer);
-        }
-    }, [allRevealed]);
+    const [allViewed, setAllViewed] = useState(false);
 
     const handleFinish = () => {
         setAllRevealed(true);
+    };
+
+    const handleLightboxClose = () => {
+        // Only show the question if all images have been viewed and they just closed one
+        if (allViewed) {
+            setShowQuestion(true);
+        }
     };
 
     return (
@@ -69,15 +68,23 @@ export default function ProposalPage() {
                             </h1>
                         </div>
 
-                        <HoneyComb items={MEMORIES} onFinish={handleFinish} />
+                        <HoneyComb
+                            items={MEMORIES}
+                            onFinish={handleFinish}
+                            onAllViewed={() => setAllViewed(true)}
+                            onLightboxClose={handleLightboxClose}
+                            forceRevealed={allRevealed}
+                        />
 
                         <motion.p
-                            className="text-amber-200/40 text-sm mt-8 animate-pulse"
+                            className="text-amber-200/40 text-sm mt-8 animate-pulse text-center max-w-xs"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 0.6 }}
                             transition={{ delay: 1 }}
                         >
-                            Tap to reveal memory fragments...
+                            {allRevealed
+                                ? "Click all images to unlock the final question..."
+                                : "Tap to reveal memory fragments..."}
                         </motion.p>
                     </motion.div>
                 ) : (
@@ -101,7 +108,7 @@ export default function ProposalPage() {
                                 One Last Question
                             </motion.div>
 
-                            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-500 drop-shadow-2xl leading-[1.1]">
+                            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-500 drop-shadow-2xl leading-[1.1] max-w-2xl">
                                 {PROPOSAL_MESSAGE}
                             </h1>
                         </div>
@@ -110,15 +117,24 @@ export default function ProposalPage() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ delay: 1 }}
-                            className="flex gap-6 mt-8"
+                            className="flex flex-col items-center gap-6 mt-8"
                         >
-                            <Link
-                                className="group relative px-10 py-4 bg-white text-black text-xl font-bold rounded-full overflow-hidden transition-transform hover:scale-105 active:scale-95 shadow-2xl shadow-white/20"
-                                href="/proposal/yes"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-amber-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                <span className="relative">Yes, I Will!</span>
-                            </Link>
+                            <div className="flex flex-col md:flex-row gap-6">
+                                <Link
+                                    className="group relative px-10 py-4 bg-white text-black text-xl font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/20"
+                                    href="/proposal/yes"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-amber-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="relative">Yes, I Will!</span>
+                                </Link>
+
+                                <button
+                                    onClick={() => setShowQuestion(false)}
+                                    className="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-white/40 hover:text-white font-medium"
+                                >
+                                    Review Gallery
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
@@ -115,63 +115,62 @@ const HexagonCard: React.FC<HexagonProps> = ({ item, revealed, onClick, index })
 interface LightboxProps {
     src: string;
     onClose: () => void;
-    onNext?: () => void;
-    onPrev?: () => void;
-    showNav?: boolean;
 }
 
-const Lightbox: React.FC<LightboxProps> = ({ src, onClose, onNext, onPrev, showNav }) => {
+const Lightbox: React.FC<LightboxProps> = ({ src, onClose }) => {
+    // Keyboard Navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [onClose]);
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-10 bg-black/95 backdrop-blur-2xl"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-[30px] select-none"
             onClick={onClose}
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative max-w-5xl max-h-full w-full h-full flex items-center justify-center"
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="relative w-full h-full flex items-center justify-center"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="relative w-full h-full flex items-center justify-center">
-                    <Image
-                        src={src}
-                        alt="Memory Lightbox"
-                        fill
-                        className="object-contain"
-                        priority
-                    />
+                <div className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={src}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="relative w-full h-full flex items-center justify-center"
+                        >
+                            <Image
+                                src={src}
+                                alt="Memory Lightbox"
+                                fill
+                                className="object-contain pointer-events-none p-4 md:p-12"
+                                priority
+                            />
+                        </motion.div>
+                    </AnimatePresence>
                 </div>
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute -top-12 right-0 md:-right-12 text-white/40 hover:text-white transition-colors p-2 bg-white/5 hover:bg-white/10 rounded-full"
+                    className="absolute top-6 right-6 text-white/40 hover:text-white transition-all p-3 hover:bg-white/10 rounded-full z-10"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 </button>
-
-                {/* Navigation Buttons */}
-                {showNav && (
-                    <>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onPrev?.(); }}
-                            className="absolute left-0 md:-left-20 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
-                        </button>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onNext?.(); }}
-                            className="absolute right-0 md:-right-20 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors p-3 bg-white/5 hover:bg-white/10 rounded-full"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
-                        </button>
-                    </>
-                )}
             </motion.div>
         </motion.div>
     );
@@ -183,23 +182,27 @@ const Lightbox: React.FC<LightboxProps> = ({ src, onClose, onNext, onPrev, showN
 interface GridProps {
     items: HoneycombItem[];
     onFinish?: () => void;
+    onAllViewed?: () => void;
+    onLightboxClose?: () => void; // NEW: Callback when lightbox is closed
+    forceRevealed?: boolean;
 }
 
-const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish }) => {
+const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish, onAllViewed, onLightboxClose, forceRevealed = false }) => {
     const [revealedIds, setRevealedIds] = useState<Set<string | number>>(new Set());
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [viewedIndices, setViewedIndices] = useState<Set<number>>(new Set());
 
     // Get only image items that are revealed for the lightbox
     const imageItems = items.filter(it => it.type === "image");
-    const revealedImageItems = imageItems.filter(it => revealedIds.has(it.id));
 
     const handleHexClick = (id: string | number) => {
         const item = items.find(it => it.id === id);
 
-        if (revealedIds.has(id)) {
+        if (revealedIds.has(id) || forceRevealed) {
             if (item?.type === "image") {
                 const index = imageItems.findIndex(it => it.id === id);
                 setSelectedImageIndex(index);
+                markAsViewed(index);
             }
             return;
         }
@@ -213,14 +216,16 @@ const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish }) => {
         }
     };
 
-    const handleNext = () => {
-        if (selectedImageIndex === null) return;
-        setSelectedImageIndex((prev) => (prev! + 1) % imageItems.length);
-    };
-
-    const handlePrev = () => {
-        if (selectedImageIndex === null) return;
-        setSelectedImageIndex((prev) => (prev! - 1 + imageItems.length) % imageItems.length);
+    const markAsViewed = (index: number) => {
+        setViewedIndices(prev => {
+            const next = new Set(prev);
+            next.add(index);
+            // Check if all are viewed immediately when the last one is opened
+            if (next.size === imageItems.length) {
+                if (onAllViewed) onAllViewed();
+            }
+            return next;
+        });
     };
 
     return (
@@ -237,7 +242,7 @@ const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish }) => {
                         <HexagonCard
                             item={item}
                             index={i}
-                            revealed={revealedIds.has(item.id)}
+                            revealed={forceRevealed || revealedIds.has(item.id)}
                             onClick={handleHexClick}
                         />
                     </div>
@@ -248,10 +253,10 @@ const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish }) => {
                 {selectedImageIndex !== null && (
                     <Lightbox
                         src={imageItems[selectedImageIndex].content}
-                        onClose={() => setSelectedImageIndex(null)}
-                        onNext={handleNext}
-                        onPrev={handlePrev}
-                        showNav={imageItems.length > 1}
+                        onClose={() => {
+                            setSelectedImageIndex(null);
+                            if (onLightboxClose) onLightboxClose();
+                        }}
                     />
                 )}
             </AnimatePresence>
