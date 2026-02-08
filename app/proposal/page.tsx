@@ -27,14 +27,20 @@ export default function ProposalPage() {
     const [allRevealed, setAllRevealed] = useState(false);
     const [showQuestion, setShowQuestion] = useState(false);
     const [allViewed, setAllViewed] = useState(false);
+    const [isTransitioning, setIsTransitioning] = useState(false);
 
     const handleFinish = () => {
         setAllRevealed(true);
+        setIsTransitioning(true);
+        // After 5s of revealing everything, move to the question
+        setTimeout(() => {
+            setShowQuestion(true);
+        }, 5000);
     };
 
     const handleLightboxClose = () => {
-        // Only show the question if all images have been viewed and they just closed one
-        if (allViewed) {
+        // If everything is revealed, ensure we show the question if they close the lightbox
+        if (allRevealed) {
             setShowQuestion(true);
         }
     };
@@ -71,7 +77,6 @@ export default function ProposalPage() {
                         <HoneyComb
                             items={MEMORIES}
                             onFinish={handleFinish}
-                            onAllViewed={() => setAllViewed(true)}
                             onLightboxClose={handleLightboxClose}
                             forceRevealed={allRevealed}
                         />
@@ -82,59 +87,69 @@ export default function ProposalPage() {
                             animate={{ opacity: 0.6 }}
                             transition={{ delay: 1 }}
                         >
-                            {allRevealed
-                                ? "Click all images to unlock the final question..."
-                                : "Tap to reveal memory fragments..."}
+                            {isTransitioning
+                                ? "One last thing..."
+                                : allRevealed
+                                    ? "Explore the memories or wait a moment..."
+                                    : "Tap to reveal memory fragments..."}
                         </motion.p>
                     </motion.div>
                 ) : (
                     <motion.div
                         key="proposal"
-                        initial={{ opacity: 0, scale: 0.9 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 1, type: "spring", bounce: 0.3 }}
-                        className="z-20 flex flex-col items-center text-center space-y-10 max-w-3xl"
+                        transition={{ duration: 1.2, type: "spring", bounce: 0.2 }}
+                        className="z-20 flex flex-col items-center text-center space-y-12 max-w-4xl px-4"
                     >
                         {/* Glow Effect behind text */}
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-amber-500/10 blur-[100px] rounded-full pointer-events-none" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/10 blur-[120px] rounded-full pointer-events-none animate-pulse" />
 
-                        <div className="relative space-y-6">
+                        <div className="relative space-y-8">
                             <motion.div
-                                initial={{ opacity: 0, y: 20 }}
+                                initial={{ opacity: 0, y: 30 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.3 }}
-                                className="inline-block px-4 py-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-sm font-medium tracking-wider uppercase mb-4"
+                                transition={{ delay: 0.4, duration: 0.8 }}
+                                className="inline-flex items-center gap-3 px-6 py-2 rounded-full border border-amber-500/20 bg-amber-500/5 backdrop-blur-sm text-amber-200 text-xs font-bold tracking-[0.3em] uppercase mb-4 shadow-[0_0_20px_rgba(245,158,11,0.05)]"
                             >
-                                One Last Question
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                The Final Question
                             </motion.div>
 
-                            <h1 className="text-5xl md:text-7xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-100 to-amber-500 drop-shadow-2xl leading-[1.1] max-w-2xl">
+                            <motion.h1
+                                initial={{ opacity: 0, filter: "blur(10px)" }}
+                                animate={{ opacity: 1, filter: "blur(0px)" }}
+                                transition={{ delay: 0.8, duration: 1.2 }}
+                                className="text-6xl md:text-8xl font-serif tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-50 to-amber-500 drop-shadow-2xl leading-[1.05] italic"
+                            >
                                 {PROPOSAL_MESSAGE}
-                            </h1>
+                            </motion.h1>
                         </div>
 
                         <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 1 }}
-                            className="flex flex-col items-center gap-6 mt-8"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 2, duration: 0.8 }}
+                            className="flex flex-col md:flex-row items-center gap-8 mt-12"
                         >
-                            <div className="flex flex-col md:flex-row gap-6">
-                                <Link
-                                    className="group relative px-10 py-4 bg-white text-black text-xl font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/20"
-                                    href="/proposal/yes"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-amber-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                    <span className="relative">Yes, I Will!</span>
-                                </Link>
+                            <Link
+                                className="group relative px-14 py-5 bg-white text-black text-2xl font-bold rounded-full overflow-hidden transition-all hover:scale-105 active:scale-95 shadow-[0_20px_50px_rgba(255,255,255,0.2)]"
+                                href="/proposal/yes"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-amber-100 via-white to-amber-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                <span className="relative z-10">Yes, Forever</span>
+                            </Link>
 
-                                <button
-                                    onClick={() => setShowQuestion(false)}
-                                    className="px-8 py-4 rounded-full border border-white/10 hover:bg-white/5 transition-all text-white/40 hover:text-white font-medium"
-                                >
-                                    Review Gallery
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowQuestion(false);
+                                    setIsTransitioning(false);
+                                }}
+                                className="group px-10 py-5 rounded-full border border-white/10 hover:bg-white/5 transition-all text-white/30 hover:text-white font-medium flex items-center gap-2"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className=" group-hover:-translate-x-1 transition-transform"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+                                Review our story
+                            </button>
                         </motion.div>
                     </motion.div>
                 )}

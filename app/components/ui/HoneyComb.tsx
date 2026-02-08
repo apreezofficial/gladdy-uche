@@ -13,10 +13,14 @@ function cn(...inputs: (string | undefined | null | false)[]) {
 // ----------------------------------------------------------------------
 // Types & Interfaces
 // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Types & Interfaces
+// ----------------------------------------------------------------------
 export interface HoneycombItem {
     id: string | number;
     content: string; // The text or image url
     type: "text" | "image";
+    title?: string; // Optional title for text items
 }
 
 interface HexagonProps {
@@ -73,10 +77,13 @@ const HexagonCard: React.FC<HexagonProps> = ({ item, revealed, onClick, index })
                                 </div>
                             </div>
                         ) : (
-                            <div className="p-4 text-center">
-                                <p className="text-amber-100 text-xs md:text-sm font-medium leading-relaxed font-sans">
+                            <div className="p-4 text-center group/text">
+                                <p className="text-amber-200 text-[10px] md:text-sm font-medium leading-relaxed font-sans line-clamp-3 group-hover/text:text-amber-100 transition-colors">
                                     {item.content}
                                 </p>
+                                <div className="mt-1 opacity-0 group-hover/text:opacity-40 transition-opacity text-[8px] uppercase tracking-widest text-amber-500">
+                                    Read more
+                                </div>
                             </div>
                         )}
                         {/* Gold Inner Border */}
@@ -113,11 +120,11 @@ const HexagonCard: React.FC<HexagonProps> = ({ item, revealed, onClick, index })
 // Lightbox Component
 // ----------------------------------------------------------------------
 interface LightboxProps {
-    src: string;
+    item: HoneycombItem;
     onClose: () => void;
 }
 
-const Lightbox: React.FC<LightboxProps> = ({ src, onClose }) => {
+const Lightbox: React.FC<LightboxProps> = ({ item, onClose }) => {
     // Keyboard Navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -132,7 +139,7 @@ const Lightbox: React.FC<LightboxProps> = ({ src, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-[30px] select-none"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/98 backdrop-blur-[40px] select-none"
             onClick={onClose}
         >
             <motion.div
@@ -140,37 +147,59 @@ const Lightbox: React.FC<LightboxProps> = ({ src, onClose }) => {
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="relative w-full h-full flex items-center justify-center"
+                className="relative w-full h-full flex items-center justify-center p-6 md:p-12"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden">
-                    <AnimatePresence mode="wait">
+                <div className="relative w-full max-w-5xl h-full flex flex-col items-center justify-center">
+                    {item.type === 'image' ? (
+                        <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
+                            <AnimatePresence mode="wait">
+                                <motion.div
+                                    key={item.content}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="relative w-full h-full flex items-center justify-center"
+                                >
+                                    <Image
+                                        src={item.content}
+                                        alt="Memory Lightbox"
+                                        fill
+                                        className="object-contain pointer-events-none shadow-2xl rounded-lg"
+                                        priority
+                                    />
+                                </motion.div>
+                            </AnimatePresence>
+                        </div>
+                    ) : (
                         <motion.div
-                            key={src}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="relative w-full h-full flex items-center justify-center"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center space-y-12 max-w-3xl"
                         >
-                            <Image
-                                src={src}
-                                alt="Memory Lightbox"
-                                fill
-                                className="object-contain pointer-events-none p-4 md:p-12"
-                                priority
-                            />
+                            <div className="w-20 h-[1px] bg-amber-500/50 mx-auto" />
+                            <h2 className="text-3xl md:text-5xl font-serif text-amber-50 leading-relaxed tracking-tight italic">
+                                "{item.content}"
+                            </h2>
+                            <div className="w-20 h-[1px] bg-amber-500/50 mx-auto" />
+                            <p className="text-amber-500/40 text-xs uppercase tracking-[0.4em] font-medium">
+                                A Fragment of Us
+                            </p>
                         </motion.div>
-                    </AnimatePresence>
+                    )}
                 </div>
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
-                    className="absolute top-6 right-6 text-white/40 hover:text-white transition-all p-3 hover:bg-white/10 rounded-full z-10"
+                    className="absolute top-8 right-8 text-white/40 hover:text-white transition-all p-4 hover:bg-white/5 rounded-full z-10 border border-white/5 hover:border-white/20"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
                 </button>
+
+                {/* Ambient Glow */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-500/5 via-transparent to-transparent pointer-events-none" />
             </motion.div>
         </motion.div>
     );
@@ -189,19 +218,21 @@ interface GridProps {
 
 const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish, onAllViewed, onLightboxClose, forceRevealed = false }) => {
     const [revealedIds, setRevealedIds] = useState<Set<string | number>>(new Set());
-    const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+    const [selectedItemId, setSelectedItemId] = useState<string | number | null>(null);
     const [viewedIndices, setViewedIndices] = useState<Set<number>>(new Set());
 
-    // Get only image items that are revealed for the lightbox
+    // Filter items for the "gallery" sequence (could be all items now that text has UX)
+    // But user specifically said "after i click the last imae", so maybe we stick to images for the trigger
     const imageItems = items.filter(it => it.type === "image");
 
     const handleHexClick = (id: string | number) => {
         const item = items.find(it => it.id === id);
+        const isImage = item?.type === "image";
 
         if (revealedIds.has(id) || forceRevealed) {
-            if (item?.type === "image") {
+            setSelectedItemId(id);
+            if (isImage) {
                 const index = imageItems.findIndex(it => it.id === id);
-                setSelectedImageIndex(index);
                 markAsViewed(index);
             }
             return;
@@ -228,6 +259,8 @@ const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish, onAllViewed, onLi
         });
     };
 
+    const selectedItem = items.find(it => it.id === selectedItemId);
+
     return (
         <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto py-10 relative z-10 p-4">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 place-items-center">
@@ -250,11 +283,11 @@ const HoneycombGrid: React.FC<GridProps> = ({ items, onFinish, onAllViewed, onLi
             </div>
 
             <AnimatePresence>
-                {selectedImageIndex !== null && (
+                {selectedItem && (
                     <Lightbox
-                        src={imageItems[selectedImageIndex].content}
+                        item={selectedItem}
                         onClose={() => {
-                            setSelectedImageIndex(null);
+                            setSelectedItemId(null);
                             if (onLightboxClose) onLightboxClose();
                         }}
                     />
